@@ -28,4 +28,4 @@ plt.imshow(color_select)
 plt.show()
 
 # Uncomment the following code if you are running the code locally and wish to save the image
-# mpimg.imsave("test-after.jpg", color_select)
+mpimg.imsave("images_results/lanes_color_select.jpg", color_select)
