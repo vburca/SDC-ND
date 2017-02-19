@@ -57,3 +57,8 @@ y = [vertices[0][0][1], vertices[0][1][1], vertices[0][2][1], vertices[0][3][1],
 plt.plot(x, y, 'b--', lw=2)
 plt.show()
 
+real_image_lines = cv2.addWeighted(image, 0.8, line_image, 1, 0)
+plt.imshow(real_image_lines)
+plt.plot(x, y, 'b--', lw=2)
+plt.show()
+
