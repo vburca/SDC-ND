@@ -30,6 +30,13 @@ The goals / steps of this project are the following:
 [image11]: ./report_resources/top5_3.png "Top 5 Softmax for Image 3"
 [image12]: ./report_resources/top5_4.png "Top 5 Softmax for Image 4"
 [image13]: ./report_resources/top5_5.png "Top 5 Softmax for Image 5"
+[image14]: ./report_resources/activations0.png "Activations for Image 1"
+[image15]: ./report_resources/activations1.png "Activations for Image 2"
+[image16]: ./report_resources/activations2.png "Activations for Image 3"
+[image17]: ./report_resources/activations3.png "Activations for Image 4"
+[image18]: ./report_resources/activations4.png "Activations for Image 5"
+[image19]: ./report_resources/activations2_2.png "Activations for a Training Set Image from Label 2"
+[image20]: ./report_resources/activations2_17.png "Activations for a Training Set Image from Label 17"
 
 
 ## Rubric Points
@@ -128,9 +135,9 @@ The model was trained over `10` epochs, with a batch size of `128`, on my local 
 I trained the model initially with the same optimizer that was described in LeNet: the Adam Optimizer for minimizing a the mean softmax cross entropy. This worked well enough, getting me around 89%-91% on grayscale images, but I wanted something more. After reading some more through Michael Nielsen's [online book](http://neuralnetworksanddeeplearning.com/chap3.html), I found out about the L2 regularization and how it improves the problem of overfitting on the training set (his descriptions are very clear and awesome, highly recommend!).
 
 My final model results were:
-* training set accuracy of ? **98.1%**
-* validation set accuracy of ? **95.4%**
-* test set accuracy of ? **92.2%**
+* training set accuracy of ? **97.4%**
+* validation set accuracy of ? **93.7%**
+* test set accuracy of ? **91.5%**
 
 If an iterative approach was chosen:
 * What was the first architecture that was tried and why was it chosen?
@@ -186,7 +193,7 @@ Here are the results of the prediction:
 | General caution		| General caution |
 | End of all speed and passing limits	| End of all speed and passing limits |
 
-The model correctly predicted 4 out of the 5 input traffic signs, which gives an overall accuracy of `80%` on these newly seen images. This is way below the accuracy on the test set (`92.2%`).
+The model correctly predicted 4 out of the 5 input traffic signs, which gives an overall accuracy of `80%` on these newly seen images. This is way below the accuracy on the test set (`91.5%`).
 
 
 ####3. Describe how certain the model is when predicting on each of the five new images by looking at the softmax probabilities for each prediction. Provide the top 5 softmax probabilities for each image along with the sign type of each probability. (OPTIONAL: as described in the "Stand Out Suggestions" part of the rubric, visualizations can also be provided such as bar charts)
@@ -205,3 +212,29 @@ Something strange I observed was related to image #3, with original label `2` - 
 
 ### (Optional) Visualizing the Neural Network (See Step 4 of the Ipython notebook for more details)
 ####1. Discuss the visual output of your trained network's feature maps. What characteristics did the neural network use to make classifications?
+
+Below are the activation feature maps for the first convolutional layer. It seems like the neural network uses differences in contrast (shades of gray) in order to make the classifications.
+
+![alt text][image14]
+![alt text][image15]
+![alt text][image16]
+![alt text][image17]
+![alt text][image18]
+
+Looking at these images (especially the 3rd row, associated with the only downloaded image that my model was not able to properly classify), I am wondering why did it fail, since the feature map seems clear enough.
+
+Let's look again at the image that caused problems to my model:
+
+![alt text][image4]
+
+The label of this image should be **Label 2**, but my model predicted **Label 17** instead. Let's compare the following 3 activation feature maps and see why this actually happened:
+* activation feature map of my test image
+![alt text][image16]
+
+* activation feature map of a training set image with **Label 2**
+![alt text][image19]
+
+* activation feature map of a training set image with **Label 17**
+![alt text][image20]
+
+We can see that there is a bigger similarity between the the first and the third feature maps, which makes me think that this is why my model incorrectly predicted the image.
