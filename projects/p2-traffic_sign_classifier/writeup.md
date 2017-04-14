@@ -1,6 +1,6 @@
-#**Traffic Sign Recognition**
+# **Traffic Sign Recognition**
 
-##Writeup
+## Writeup
 
 ---
 
@@ -40,19 +40,19 @@ The goals / steps of this project are the following:
 
 
 ## Rubric Points
-###Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/481/view) individually and describe how I addressed each point in my implementation.
+### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/481/view) individually and describe how I addressed each point in my implementation.
 
 ---
-###Writeup / README
+### Writeup / README
 
-####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one. You can submit your writeup as markdown or pdf. You can use this template as a guide for writing the report. The submission includes the project code.
+#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one. You can submit your writeup as markdown or pdf. You can use this template as a guide for writing the report. The submission includes the project code.
 
 You're reading it! and here is a link to my [project code](https://github.com/vburca/SDC-ND/blob/master/projects/p2-traffic_sign_classifier/Traffic_Sign_Classifier.ipynb)
 
 
-###Data Set Summary & Exploration
+### Data Set Summary & Exploration
 
-####1. Provide a basic summary of the data set. In the code, the analysis should be done using python, numpy and/or pandas methods rather than hardcoding results manually.
+#### 1. Provide a basic summary of the data set. In the code, the analysis should be done using python, numpy and/or pandas methods rather than hardcoding results manually.
 
 I only used basic numpy functionality to inspect the training, validation and test data sets and their shapes. Therefore, I got to the following numbers.
 
@@ -63,7 +63,7 @@ I only used basic numpy functionality to inspect the training, validation and te
 * The number of unique classes/labels in the data set is ? **Number of classes = 43**
 
 
-####2. Include an exploratory visualization of the dataset.
+#### 2. Include an exploratory visualization of the dataset.
 
 Here is an exploratory visualization of the data set.
 I wanted to see the data distribution for all of the sets (training, validation and test).
@@ -81,9 +81,9 @@ I observed that the distributions are roughly similar, with big changes in ampli
 A clear disadvantage of the data set was observed through these plots though: the fact that some of the classes had way more data points than others, the ration, in some cases, even getting closer to a factor of 10. I could have addressed this by data augmentation (for example creating more variations of data points for the classes with a few count, starting from the data points we already had - either rotation, or adding noise to the images, trying to increase the overall count), but I decided to try and build a model good enough for this sort of not so uniform data set, and see how good can the model get even in situations like these.
 
 
-###Design and Test a Model Architecture
+### Design and Test a Model Architecture
 
-####1. Describe how you preprocessed the image data. What techniques were chosen and why did you choose these techniques? Consider including images showing the output of each preprocessing technique. Pre-processing refers to techniques such as converting to grayscale, normalization, etc. (OPTIONAL: As described in the "Stand Out Suggestions" part of the rubric, if you generated additional data for training, describe why you decided to generate additional data, how you generated the data, and provide example images of the additional data. Then describe the characteristics of the augmented training set like number of images in the set, number of images for each class, etc.)
+#### 1. Describe how you preprocessed the image data. What techniques were chosen and why did you choose these techniques? Consider including images showing the output of each preprocessing technique. Pre-processing refers to techniques such as converting to grayscale, normalization, etc. (OPTIONAL: As described in the "Stand Out Suggestions" part of the rubric, if you generated additional data for training, describe why you decided to generate additional data, how you generated the data, and provide example images of the additional data. Then describe the characteristics of the augmented training set like number of images in the set, number of images for each class, etc.)
 
 I pre-processed the images by converting them to grayscale and normalizing the pixel values. Here is an example of such an image.
 
@@ -96,7 +96,7 @@ Normalization was done in order to adjust the data (pixel values) to zero mean a
 As mentioned above, I did not do any data augmentation, although I considered it for the reasons stated before.
 
 
-####2. Describe what your final model architecture looks like including model type, layers, layer sizes, connectivity, etc.) Consider including a diagram and/or table describing the final model.
+#### 2. Describe what your final model architecture looks like including model type, layers, layer sizes, connectivity, etc.) Consider including a diagram and/or table describing the final model.
 
 My final model was a slight modification of LeNet, by adding some dropout steps as well. Here is a detailed description of each layer.
 
@@ -119,7 +119,7 @@ My final model was a slight modification of LeNet, by adding some dropout steps 
 | Fully Connected | Output 43 |
 
 
-####3. Describe how you trained your model. The discussion can include the type of optimizer, the batch size, number of epochs and any hyperparameters such as learning rate.
+#### 3. Describe how you trained your model. The discussion can include the type of optimizer, the batch size, number of epochs and any hyperparameters such as learning rate.
 
 I trained the model with an Adam Optimizer that minimizes a loss function. This loss function is defined as following:
 ```
@@ -130,7 +130,7 @@ I will explain in the next section why I decided to use this loss function, over
 
 The model was trained over `10` epochs, with a batch size of `128`, on my local CPU (laptop). I used a learning rate of `0.001` and a regularization lambda of `0.0001`. Moreover, for the dropout regularization step, I used a "keep probability" of `50%`.
 
-####4. Describe the approach taken for finding a solution and getting the validation set accuracy to be at least 0.93. Include in the discussion the results on the training, validation and test sets and where in the code these were calculated. Your approach may have been an iterative process, in which case, outline the steps you took to get to the final solution and why you chose those steps. Perhaps your solution involved an already well known implementation or architecture. In this case, discuss why you think the architecture is suitable for the current problem.
+#### 4. Describe the approach taken for finding a solution and getting the validation set accuracy to be at least 0.93. Include in the discussion the results on the training, validation and test sets and where in the code these were calculated. Your approach may have been an iterative process, in which case, outline the steps you took to get to the final solution and why you chose those steps. Perhaps your solution involved an already well known implementation or architecture. In this case, discuss why you think the architecture is suitable for the current problem.
 
 I trained the model initially with the same optimizer that was described in LeNet: the Adam Optimizer for minimizing a the mean softmax cross entropy. This worked well enough, getting me around 89%-91% on grayscale images, but I wanted something more. After reading some more through Michael Nielsen's [online book](http://neuralnetworksanddeeplearning.com/chap3.html), I found out about the L2 regularization and how it improves the problem of overfitting on the training set (his descriptions are very clear and awesome, highly recommend!).
 
@@ -163,9 +163,9 @@ Given the fact that we are analyzing core features within images, a convolution 
 In terms of the dropout, this was a regularization technique used in order to avoid overfitting on the training set. Overfitting on the training set was resulting in lower accuracy for the validation and test sets.
 
 
-###Test a Model on New Images
+### Test a Model on New Images
 
-####1. Choose five German traffic signs found on the web and provide them in the report. For each image, discuss what quality or qualities might be difficult to classify.
+#### 1. Choose five German traffic signs found on the web and provide them in the report. For each image, discuss what quality or qualities might be difficult to classify.
 
 Here are five German traffic signs that I found on the web:
 
@@ -181,7 +181,7 @@ Here are five German traffic signs that I found on the web:
 
 I chose image #3 because of its angled position, and image #2 due to the weather noise that was naturally added in, trying to see how robust my model was. The other images are other normal examples of traffic signs, similar to what was present in the original data set. The images have been downloaded at higher scales, but resized accordingly, to 32x32.
 
-####2. Discuss the model's predictions on these new traffic signs and compare the results to predicting on the test set. At a minimum, discuss what the predictions were, the accuracy on these new predictions, and compare the accuracy to the accuracy on the test set (OPTIONAL: Discuss the results in more detail as described in the "Stand Out Suggestions" part of the rubric).
+#### 2. Discuss the model's predictions on these new traffic signs and compare the results to predicting on the test set. At a minimum, discuss what the predictions were, the accuracy on these new predictions, and compare the accuracy to the accuracy on the test set (OPTIONAL: Discuss the results in more detail as described in the "Stand Out Suggestions" part of the rubric).
 
 Here are the results of the prediction:
 
@@ -196,7 +196,7 @@ Here are the results of the prediction:
 The model correctly predicted 4 out of the 5 input traffic signs, which gives an overall accuracy of `80%` on these newly seen images. This is way below the accuracy on the test set (`91.5%`).
 
 
-####3. Describe how certain the model is when predicting on each of the five new images by looking at the softmax probabilities for each prediction. Provide the top 5 softmax probabilities for each image along with the sign type of each probability. (OPTIONAL: as described in the "Stand Out Suggestions" part of the rubric, visualizations can also be provided such as bar charts)
+#### 3. Describe how certain the model is when predicting on each of the five new images by looking at the softmax probabilities for each prediction. Provide the top 5 softmax probabilities for each image along with the sign type of each probability. (OPTIONAL: as described in the "Stand Out Suggestions" part of the rubric, visualizations can also be provided such as bar charts)
 
 The code for making predictions on my final model is located in the 11th cell of the Ipython notebook.
 
