@@ -7,6 +7,15 @@
 *.zip
 *.gz
 *.p
+*.npy
+
+.vscode/
+
+# Tensorflow Checkpoint Files
+checkpoint
+*.data-*
+*.index
+*.meta
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
