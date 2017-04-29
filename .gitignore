@@ -11,6 +11,11 @@
 
 .vscode/
 
+data
+models
+.ipynb_checkpoints
+bottlenecks
+
 # Tensorflow Checkpoint Files
 checkpoint
 *.data-*
