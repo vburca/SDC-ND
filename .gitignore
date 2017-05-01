@@ -1,5 +1,6 @@
 .DS_Store
 
+# AWS keys
 *.pem
 
 # Data
@@ -8,16 +9,24 @@
 *.gz
 *.p
 *.npy
+data/
+bottlenecks/
 
+
+# Visual Studio Code settings cache
 .vscode/
 
-data
-models
+# Model folders
+models/
+
+# Python Notebook checkpoints
 .ipynb_checkpoints
-bottlenecks
+
+# Simulator files for p3
+windows-sim/
 
 # Tensorflow Checkpoint Files
-checkpoint
+checkpoint/
 *.data-*
 *.index
 *.meta
