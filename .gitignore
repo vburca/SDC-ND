@@ -9,18 +9,15 @@
 *.gz
 *.p
 *.npy
+data.zip
 data/
 bottlenecks/
-
 
 # Visual Studio Code settings cache
 .vscode/
 
 # Model folders
 models/
-
-# Python Notebook checkpoints
-.ipynb_checkpoints
 
 # Simulator files for p3
 windows-sim/
