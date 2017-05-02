@@ -1,6 +1,12 @@
+# Python
+__pycache__/
+
 # Data
 data.zip
-data/
+data-sources/
 
 # Simulator files for p3
 windows-sim/
+
+# Model checkpoints
+*.h5
