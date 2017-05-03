@@ -12,7 +12,8 @@ data_sources = [
     'counterclock-keys-data'
 ]
 
-BATCH_SIZE = 32
+BATCH_SIZE = 128
+DEVIATION_DELTA = 0.10
 
 """ Method to load data lines from a data source that contains a .csv file.
     Returns data lines from the .csv file.
@@ -38,6 +39,24 @@ def _load_all_data_sources():
 
     return lines
 
+def _get_center_image_steering(batch_sample):
+    center_image_path = batch_sample[0].strip()
+    center_image = cv2.imread(center_image_path)
+    center_angle = float(batch_sample[3])
+    return center_image, center_angle
+
+def _get_left_image_steering(batch_sample):
+    left_image_path = batch_sample[1].strip()
+    left_image = cv2.imread(left_image_path)
+    left_angle = float(batch_sample[3]) + DEVIATION_DELTA
+    return left_image, left_angle
+
+def _get_right_image_steering(batch_sample):
+    right_image_path = batch_sample[2].strip()
+    right_image = cv2.imread(right_image_path)
+    right_angle = float(batch_sample[3]) - DEVIATION_DELTA
+    return right_image, right_angle
+
 """ Generator for image and steering data, so that we do not load all
 the data in memory at once.
 """
@@ -53,17 +72,16 @@ def _generator(samples, batch_size=BATCH_SIZE):
             angles = []
 
             for batch_sample in batch_samples:
-                center_image_path = batch_sample[0]
-                center_image = cv2.imread(center_image_path)
-                center_angle = float(batch_sample[3])
-
-                # Flip image with probability 50%
-                if random.random() < 0:
-                    images.append(np.fliplr(center_image))
-                    angles.append(-center_angle)
+                prob = random.random()
+                if prob < .33:
+                    image, angle = _get_left_image_steering(batch_sample)
+                elif prob < .66:
+                    image, angle = _get_left_image_steering(batch_sample)
                 else:
-                    images.append(center_image)
-                    angles.append(center_angle)
+                    image, angle = _get_right_image_steering(batch_sample)
+
+                images.append(image)
+                angles.append(angle)
 
             X_train = np.array(images)
             y_train = np.array(angles)
@@ -72,5 +90,5 @@ def _generator(samples, batch_size=BATCH_SIZE):
 
 train_samples, validation_samples = train_test_split(_load_all_data_sources(), test_size=0.2)
 
-train_generator = _generator(train_samples)
-validation_generator = _generator(validation_samples)
+train_generator = _generator(train_samples * 3)
+validation_generator = _generator(validation_samples * 3)
