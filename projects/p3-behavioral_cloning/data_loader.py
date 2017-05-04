@@ -7,7 +7,7 @@ import random
 
 data_sources = [
     'data',
-    'my-data',
+    #'my-data',
     'my-keys-data',
     'counterclock-keys-data'
 ]
@@ -73,9 +73,9 @@ def _generator(samples, batch_size=BATCH_SIZE):
 
             for batch_sample in batch_samples:
                 prob = random.random()
-                if prob < .33:
+                if prob < .15:
                     image, angle = _get_left_image_steering(batch_sample)
-                elif prob < .66:
+                elif prob < .575:
                     image, angle = _get_left_image_steering(batch_sample)
                 else:
                     image, angle = _get_right_image_steering(batch_sample)
@@ -90,5 +90,5 @@ def _generator(samples, batch_size=BATCH_SIZE):
 
 train_samples, validation_samples = train_test_split(_load_all_data_sources(), test_size=0.2)
 
-train_generator = _generator(train_samples * 3)
-validation_generator = _generator(validation_samples * 3)
+train_generator = _generator(train_samples)
+validation_generator = _generator(validation_samples)
