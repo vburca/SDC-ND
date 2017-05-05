@@ -4,9 +4,9 @@ __pycache__/
 # Data
 data.zip
 data-sources/
+recording/
 
 # Simulator files for p3
 windows-sim/
 
 # Model checkpoints
-*.h5
