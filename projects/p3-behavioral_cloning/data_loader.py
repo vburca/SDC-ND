@@ -73,10 +73,13 @@ def _generator(samples, batch_size=BATCH_SIZE):
 
             for batch_sample in batch_samples:
                 prob = random.random()
+                # Select center image with 15% probability
                 if prob < .15:
                     image, angle = _get_left_image_steering(batch_sample)
+                # Select left image with 42.5% probability
                 elif prob < .575:
                     image, angle = _get_left_image_steering(batch_sample)
+                # Select right image with 42.5% probability
                 else:
                     image, angle = _get_right_image_steering(batch_sample)
 

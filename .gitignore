@@ -9,7 +9,6 @@
 *.gz
 *.p
 *.npy
-data.zip
 data/
 bottlenecks/
 
