@@ -5,6 +5,10 @@ __pycache__/
 data.zip
 data-sources/
 recording/
+editted_recording_frames/
+original_recording_frames/
+recording/
+recording_editted/
 
 # Simulator files for p3
 windows-sim/
