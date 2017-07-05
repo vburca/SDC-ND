@@ -15,6 +15,9 @@ bottlenecks/
 # Visual Studio Code settings cache
 .vscode/
 
+# Simulators
+term2_sim_windows/
+
 # Model folders
 models/
 
