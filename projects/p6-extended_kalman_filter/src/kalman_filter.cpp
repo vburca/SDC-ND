@@ -63,13 +63,14 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   else
   {
     hx << norm,
-           atan2(py, px),
-           (px * vx + py * vy) / norm;
+          atan2(py, px),
+          (px * vx + py * vy) / norm;
   }
 
   // Measurement update
   VectorXd y = z - hx;
-  // TODO: Still need to normalize the angle
+  // Normalize the angle
+  y(1) = atan2(sin(y(1)), cos(y(1)));
 
   UpdateState(y);
 }
