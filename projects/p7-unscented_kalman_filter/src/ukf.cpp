@@ -91,10 +91,13 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 void UKF::Prediction(double delta_t) {
   /**
   TODO:
-
   Complete this function! Estimate the object's location. Modify the state
   vector, x_. Predict sigma points, the state, and the state covariance matrix.
   */
+  MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+  AugmentedSigmaPoints(&Xsig_aug);
+  SigmaPointPrediction(Xsig_aug, delta_t, &Xsig_pred_);
+  PredictMeanAndCovariance(&x_, &P_);
 }
 
 /**
