@@ -164,3 +164,54 @@ void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out)
 
   *Xsig_out = Xsig_aug;
 }
+
+void UKF::SigmaPointPrediction(MatrixXd& Xsig_aug, double delta_t, MatrixXd* Xsig_out)
+{
+  MatrixXd Xsig_pred = MatrixXd(n_x_, 2 * n_aug_ + 1);
+
+  // Predict sigma points
+  for (int i = 0; i < 2 * n_aug_ + 1; i++)
+  {
+    double p_x      = Xsig_aug(0, i);
+    double p_y      = Xsig_aug(1, i);
+    double v        = Xsig_aug(2, i);
+    double yaw      = Xsig_aug(3, i);
+    double yawd     = Xsig_aug(4, i);
+    double nu_a     = Xsig_aug(5, i);
+    double nu_yawdd = Xsig_aug(6, i);
+
+    double px_p, py_p;
+
+    // Avoid division by zero
+    if (fabs(yawd) > 0.001)
+    {
+      px_p = p_x + v / yawd * (sin(yaw + yawd * delta_t) - sin(yaw));
+      px_p = p_y + v / yawd * (cos(yaw) - cos(yaw + yawd * delta_t));
+    }
+    else
+    {
+      px_p = p_x + v * cos(yaw) * delta_t;
+      py_p = p_y + v * sin(yaw) * delta_t;
+    }
+
+    double v_p = v;
+    double yaw_p = yaw + yawd * delta_t;
+    double yawd_p = yawd;
+
+    // Add noise
+    px_p = px_p + 0.5 * delta_t * delta_t * cos(yaw) * nu_a;
+    py_p = py_p + 0.5 * delta_t * delta_t * sin(yaw) * nu_a;
+    v_p = v_p + delta_t * nu_a;
+    yaw_p = yaw_p + 0.5 * delta_t * delta_t * nu_yawdd;
+    yawd_p = yawd_p + delta_t * nu_yawdd;
+
+    // Write predicted sigma points into the right column
+    Xsig_pred(0, i) = px_p;
+    Xsig_pred(1, i) = py_p;
+    Xsig_pred(2, i) = v_p;
+    Xsig_pred(3, i) = yaw_p;
+    Xsig_pred(4, i) = yawd_p;
+  }
+
+  *Xsig_out = Xsig_pred;
+}
