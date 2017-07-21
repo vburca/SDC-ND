@@ -106,6 +106,7 @@ public:
 private:
   void AugmentedSigmaPoints(MatrixXd* Xsig_out);
   void SigmaPointPrediction(MatrixXd& Xsig_aug, double delta_t, MatrixXd* Xsig_out);
+  void PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out);
 };
 
 #endif /* UKF_H */

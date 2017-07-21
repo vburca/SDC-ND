@@ -215,3 +215,34 @@ void UKF::SigmaPointPrediction(MatrixXd& Xsig_aug, double delta_t, MatrixXd* Xsi
 
   *Xsig_out = Xsig_pred;
 }
+
+void UKF::PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out)
+{
+  // Create vector for predicted state
+  VectorXd x = VectorXd(n_x_);
+
+  // Create covariance matrix for prediction
+  MatrixXd P = MatrixXd(n_x_, n_x_);
+
+  // Predict state mean
+  x.fill(0.0);
+  for (int i = 0; i < 2 * n_aug_ + 1; i++)
+  {
+    x = x + weights_(i) * Xsig_pred_.col(i);
+  }
+
+  // Predict state covariance matrix
+  P.fill(0.0);
+  for (int i = 0; i < 2 * n_aug_ + 1; i++)
+  {
+    VectorXd x_diff = Xsig_pred_.col(i) - x;
+
+    // Normalize yaw angle
+    x_diff(3) = atan2(sin(x_diff(3)), cos(x_diff(3)));
+
+    P = P + weights_(i) * x_diff * x_diff.transpose();
+  }
+
+  *x_out = x;
+  *P_out = P;
+}
