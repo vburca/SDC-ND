@@ -7,6 +7,8 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
+const float UKF::EPS = 0.5f;
+
 /**
  * Initializes Unscented Kalman filter
  */
@@ -81,6 +83,64 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   Complete this function! Make sure you switch between lidar and radar
   measurements.
   */
+  if (!is_initialized_)
+  {
+    // Initialize state vector x
+    x_ << 1, 1, 1, 1, 1;
+
+    // Initialize state covariance matrix P
+    P_ << 0.15, 0, 0, 0, 0,
+         0, 0.15, 0, 0, 0,
+         0, 0, 1, 0, 0,
+         0, 0, 0, 1, 0,
+         0, 0, 0, 0, 1;
+
+    if (meas_package.sensor_type_ == MeasurementPackage::RADAR)
+    {
+      float rho = meas_package.raw_measurements_(0);
+      float phi = meas_package.raw_measurements_(1);
+      x_(0) = rho * cos(phi);
+      x_(1) = rho * sin(phi);
+    }
+    else if (meas_package.sensor_type_ == MeasurementPackage::LASER)
+    {
+      x_(0) = meas_package.raw_measurements_(0);
+      x_(1) = meas_package.raw_measurements_(1);
+    }
+
+    // Update the timestamp
+    time_us_ = meas_package.timestamp_;
+
+    // Avoid small values
+    if (fabs(x_(0)) < 0.001 && fabs(x_(1)) < 0.001)
+    {
+      x_(0) = EPS;
+      x_(1) = EPS;
+    }
+
+    // Done initializing, no need to predict or update
+    is_initialized_ = true;
+  }
+
+  // Prediction
+
+  // Compute the time elapsed between the current and previous measurements
+  float dt = (meas_package.timestamp_ - time_us_) / 1000000.0; // in seconds
+  time_us_ = meas_package.timestamp_;
+
+  // Make the prediction
+  // TODO - Maybe only predict if dt is not too small!
+  Prediction(dt);
+
+  // Update
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR)
+  {
+    UpdateRadar(meas_package);
+  }
+  else if (meas_package.sensor_type_ == MeasurementPackage::LASER)
+  {
+    UpdateLidar(meas_package);
+  }
 }
 
 /**
