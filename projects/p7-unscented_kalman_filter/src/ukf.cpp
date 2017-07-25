@@ -188,13 +188,16 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   You'll also need to calculate the radar NIS.
   */
+  VectorXd z = meas_package.raw_measurements_;
   VectorXd z_out = VectorXd(3);
+  MatrixXd Zsig_out = MatrixXd(3, 2 * n_aug_ + 1);
   MatrixXd S_out = MatrixXd(3, 3);
 
-  PredictRadarMeasurement(&z_out, &S_out);
+  PredictRadarMeasurement(&z_out, &Zsig_out, &S_out);
+  UpdateState(z, z_out, Zsig_out, S_out, &x_, &P_);
 }
 
-void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out)
+void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* Zsig_out, MatrixXd* S_out)
 {
   // Set measurement dimension for radar (r, phi, r_dot)
   int n_z = z_out->size();
@@ -253,10 +256,11 @@ void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out)
 
   // Write result
   *z_out = z_pred;
+  *Zsig_out = Zsig;
   *S_out = S;
 }
 
-void UKF::UpdateState(VectorXd& z_pred, VectorXd& z, MatrixXd& Zsig, MatrixXd& S, VectorXd* x_out, MatrixXd* P_out)
+void UKF::UpdateState(VectorXd& z, VectorXd& z_pred, MatrixXd& Zsig, MatrixXd& S, VectorXd* x_out, MatrixXd* P_out)
 {
   // Create vector for predicted state
   VectorXd x = VectorXd(n_x_);
