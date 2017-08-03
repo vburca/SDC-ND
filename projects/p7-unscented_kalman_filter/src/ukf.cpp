@@ -50,6 +50,27 @@ UKF::UKF() {
   Hint: one or more values initialized above might be wildly off...
   */
 
+  // Count of total measurements received so far, for lidar and radar
+  radar_measurements_ = 0;
+  lidar_measurements_ = 0;
+
+  // Count of number of NIS values above the given threshold, for lidar and radar
+  radar_NIS_above_thresh_ = 0;
+  lidar_NIS_above_thresh_ = 0;
+
+  // NIS thresholds for lidar and radar
+  // Values took from: http://www.itl.nist.gov/div898/handbook/eda/section3/eda3674.htm
+  // Values also present in the Udacity course notes.
+  radar_NIS_thresh_ = 7.815;  // Radar has 3 degrees of freedom
+  lidar_NIS_thresh_ = 5.991;  // LIDAR has 2 degrees of freedom
+
+  // NIS Chi2 percentage threshold for the computed NIS values in raport to the thresholds
+  // corresponding to the measured sensor
+  chi2_threshold_percentage_ = 0.05;
+
+  // Accepted percentage error range +/- Epsilon around the threshold percentage
+  chi2_threshold_percentage_epsilon_ = 0.03;
+
   // State dimension
   n_x_ = 5;
 
@@ -172,6 +193,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   PredictLidarMeasurement(&z_out, &Zsig_out, &S_out);
   UpdateState(z, z_out, Zsig_out, S_out, meas_package.sensor_type_, &x_, &P_);
+  CheckFilterConsistency(meas_package.sensor_type_, z, z_out, S_out);
 }
 
 void UKF::PredictLidarMeasurement(VectorXd* z_out, MatrixXd* Zsig_out, MatrixXd* S_out)
@@ -249,6 +271,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   PredictRadarMeasurement(&z_out, &Zsig_out, &S_out);
   UpdateState(z, z_out, Zsig_out, S_out, meas_package.sensor_type_, &x_, &P_);
+  CheckFilterConsistency(meas_package.sensor_type_, z, z_out, S_out);
 }
 
 void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* Zsig_out, MatrixXd* S_out)
@@ -498,4 +521,67 @@ void UKF::PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out)
 
   *x_out = x;
   *P_out = P;
+}
+
+void UKF::CheckFilterConsistency(MeasurementPackage::SensorType sensor, VectorXd& z,
+  VectorXd& z_pred, MatrixXd& S)
+{
+  // Calculate the actual NIS value
+  VectorXd z_diff = z - z_pred;
+  float NIS_value = z_diff.transpose() * S.inverse() * z_diff;
+
+  cout << endl << endl << sensor << endl;
+  cout << "NIS = " << NIS_value << endl;
+
+  float percentage_values_above_thresh;
+
+  // Calculate percentages of measurements within each threshold
+  if (sensor == MeasurementPackage::LASER)
+  {
+    // Count the LIDAR measurement
+    lidar_measurements_ += 1;
+
+    // Check if this NIS value is above the threshold
+    if (NIS_value > lidar_NIS_thresh_)
+    {
+      lidar_NIS_above_thresh_ += 1;
+    }
+
+    // Calculate the percentage of the LIDAR NIS values that were above the NIS threshold,
+    // out of all the LIDAR measurements
+    cout << "lidar measurements: " << lidar_measurements_ << endl;
+    cout << "lidar nis above thresh: " << lidar_NIS_above_thresh_ << endl;
+    percentage_values_above_thresh = ((float) lidar_NIS_above_thresh_) / lidar_measurements_;
+  }
+  else if (sensor == MeasurementPackage::RADAR)
+  {
+    // Count the Radar measurement
+    radar_measurements_ += 1;
+
+    // Check if this NIS value is above the threshold
+    if (NIS_value > radar_NIS_thresh_)
+    {
+      radar_NIS_above_thresh_ += 1;
+    }
+
+    // Calculate the percentage of the Radar NIS values that were above the NIS threshold,
+    // out of all the Radar measurements
+    cout << "radar measurements: " << radar_measurements_ << endl;
+    cout << "radar nis above thresh: " << radar_NIS_above_thresh_ << endl;
+    percentage_values_above_thresh = ((float) radar_NIS_above_thresh_) / radar_measurements_;
+  }
+
+  cout << "Percentage of NIS values above the threshold: " << percentage_values_above_thresh * 100 << "%" << endl;
+
+  // Check if the filter is consistent
+  // Check if the percentage of NIS values is within (chi2_thresh - epsilon, chi2_thresh + epsilon)
+  if (percentage_values_above_thresh > chi2_threshold_percentage_ - chi2_threshold_percentage_epsilon_
+    && percentage_values_above_thresh < chi2_threshold_percentage_ + chi2_threshold_percentage_epsilon_)
+  {
+    cout << "Filter is CONSISTENT" << endl;
+  }
+  else
+  {
+    cout << "Filter is NOT CONSISTENT" << endl;
+  }
 }

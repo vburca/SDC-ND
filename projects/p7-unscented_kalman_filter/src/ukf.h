@@ -111,6 +111,27 @@ private:
   void PredictLidarMeasurement(VectorXd* z_out, MatrixXd* Zsig_out, MatrixXd* S_out);
   void UpdateState(VectorXd& z, VectorXd& z_pred, MatrixXd& Zsig, MatrixXd& S,
       MeasurementPackage::SensorType sensor, VectorXd* x_out, MatrixXd* P_out);
+  void CheckFilterConsistency(MeasurementPackage::SensorType sensor, VectorXd& z,
+      VectorXd& z_pred, MatrixXd& S);
+
+  // Count of total measurements received so far, for lidar and radar
+  int radar_measurements_;
+  int lidar_measurements_;
+
+  // Count of number of NIS values above the given threshold, for lidar and radar
+  int radar_NIS_above_thresh_;
+  int lidar_NIS_above_thresh_;
+
+  // NIS thresholds for lidar and radar
+  float radar_NIS_thresh_;
+  float lidar_NIS_thresh_;
+
+  // NIS Chi2 percentage threshold for the computed NIS values in raport to the thresholds
+  // corresponding to the measured sensor
+  float chi2_threshold_percentage_;
+
+  // Accepted percentage error range +/- Epsilon around the threshold percentage
+  float chi2_threshold_percentage_epsilon_;
 };
 
 #endif /* UKF_H */
