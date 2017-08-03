@@ -530,9 +530,6 @@ void UKF::CheckFilterConsistency(MeasurementPackage::SensorType sensor, VectorXd
   VectorXd z_diff = z - z_pred;
   float NIS_value = z_diff.transpose() * S.inverse() * z_diff;
 
-  cout << endl << endl << sensor << endl;
-  cout << "NIS = " << NIS_value << endl;
-
   float percentage_values_above_thresh;
 
   // Calculate percentages of measurements within each threshold
@@ -549,8 +546,6 @@ void UKF::CheckFilterConsistency(MeasurementPackage::SensorType sensor, VectorXd
 
     // Calculate the percentage of the LIDAR NIS values that were above the NIS threshold,
     // out of all the LIDAR measurements
-    cout << "lidar measurements: " << lidar_measurements_ << endl;
-    cout << "lidar nis above thresh: " << lidar_NIS_above_thresh_ << endl;
     percentage_values_above_thresh = ((float) lidar_NIS_above_thresh_) / lidar_measurements_;
   }
   else if (sensor == MeasurementPackage::RADAR)
@@ -566,12 +561,13 @@ void UKF::CheckFilterConsistency(MeasurementPackage::SensorType sensor, VectorXd
 
     // Calculate the percentage of the Radar NIS values that were above the NIS threshold,
     // out of all the Radar measurements
-    cout << "radar measurements: " << radar_measurements_ << endl;
-    cout << "radar nis above thresh: " << radar_NIS_above_thresh_ << endl;
     percentage_values_above_thresh = ((float) radar_NIS_above_thresh_) / radar_measurements_;
   }
 
-  cout << "Percentage of NIS values above the threshold: " << percentage_values_above_thresh * 100 << "%" << endl;
+  cout <<endl << "Percentage of NIS values above the threshold: " << percentage_values_above_thresh * 100 << "%" << endl;
+  cout << "Accepted percentage interval (i.e. threshold interval): ( "
+    << (chi2_threshold_percentage_ - chi2_threshold_percentage_epsilon_) * 100 << "% , "
+    << (chi2_threshold_percentage_ + chi2_threshold_percentage_epsilon_) * 100 << "% )" << endl;
 
   // Check if the filter is consistent
   // Check if the percentage of NIS values is within (chi2_thresh - epsilon, chi2_thresh + epsilon)
