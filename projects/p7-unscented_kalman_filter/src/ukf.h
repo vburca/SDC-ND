@@ -111,9 +111,6 @@ private:
   void PredictLidarMeasurement(VectorXd* z_out, MatrixXd* Zsig_out, MatrixXd* S_out);
   void UpdateState(VectorXd& z, VectorXd& z_pred, MatrixXd& Zsig, MatrixXd& S,
       MeasurementPackage::SensorType sensor, VectorXd* x_out, MatrixXd* P_out);
-
-  // Initializer for positions
-  static const float EPS;
 };
 
 #endif /* UKF_H */

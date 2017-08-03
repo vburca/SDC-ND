@@ -11,7 +11,6 @@ Tools::~Tools() {}
 
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
-  cout << "Calculate RMSE" << endl;
   /**
   TODO:
     * Calculate the RMSE here.
@@ -47,7 +46,6 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
 
   // Calculate the square root of the mean of the residual
   rmse = rmse.array().sqrt();
-  cout << "CalculateRMSE end" << endl;
 
   return rmse;
 }
