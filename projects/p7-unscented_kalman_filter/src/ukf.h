@@ -113,6 +113,13 @@ private:
       MeasurementPackage::SensorType sensor, VectorXd* x_out, MatrixXd* P_out);
   void CheckFilterConsistency(MeasurementPackage::SensorType sensor, VectorXd& z,
       VectorXd& z_pred, MatrixXd& S);
+  void NormalizeAngle(double* angle_inout);
+
+  // LIDAR measurement noise covariance matrix
+  MatrixXd R_lidar_;
+
+  // Radar measurement noise covariance matrix
+  MatrixXd R_radar_;
 
   // Count of total measurements received so far, for lidar and radar
   int radar_measurements_;
@@ -132,6 +139,8 @@ private:
 
   // Accepted percentage error range +/- Epsilon around the threshold percentage
   float chi2_threshold_percentage_epsilon_;
+
+  static const double EPS;
 };
 
 #endif /* UKF_H */
