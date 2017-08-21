@@ -58,10 +58,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
     normal_distribution<double> y_dist(0, std_pos[1]);
     normal_distribution<double> theta_dist(0, std_pos[2]);
 
-    for (int i = 0; i < num_particles; i++)
+    for (Particle &p : particles)
     {
-        Particle &p = particles[i];
-
         // If moving in straight line, i.e. yaw rate close to 0
         if (yaw_rate < 1e-4)
         {
@@ -85,7 +83,21 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
     //   observed measurement to this particular landmark.
     // NOTE: this method will NOT be called by the grading code. But you will probably find it useful to
     //   implement this method and use it as a helper during the updateWeights phase.
+    for (LandmarkObs &obs : observations)
+    {
+        double min_d = INFINITY;
 
+        for (LandmarkObs &prediction : predicted)
+        {
+            double d = dist(obs.x, obs.y, prediction.x, prediction.y);
+
+            if (d < min_d)
+            {
+                min_d = d;
+                obs.id = prediction.id;
+            }
+        }
+    }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
