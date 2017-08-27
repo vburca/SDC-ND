@@ -40,7 +40,7 @@ int main()
   uWS::Hub h;
 
   // PID steering_pid(0.09, 0.001, 7.0);
-  PID steering_pid(0.3, 0.001, 7.48384);
+  PID steering_pid(0.3, 0.001, 7.5);
   //steering_pid.UseTwiddle();
   // TODO: Initialize the pid variable.
 
