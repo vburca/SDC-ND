@@ -31,7 +31,7 @@ const double Lf = 2.67;
 double ref_v = 40;
 
 // The solver takes all the state variables and actuator
-// variables in a singular vector. Thus, we should to establish
+// variables in a singular vector. Thus, we have to establish
 // when one variable starts and another ends to make our lifes easier.
 size_t x_start = 0;
 size_t y_start = x_start + N;
@@ -44,11 +44,13 @@ size_t a_start = delta_start + N - 1;
 
 class FG_eval {
  public:
-  Eigen::VectorXd coeffs;
   // Coefficients of the fitted polynomial.
+  Eigen::VectorXd coeffs;
+
   FG_eval(Eigen::VectorXd coeffs) { this->coeffs = coeffs; }
 
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
+
   // `fg` is a vector containing the cost and constraints.
   // `vars` is a vector containing the variable values (state & actuators).
   void operator()(ADvector& fg, const ADvector& vars) {
@@ -57,8 +59,8 @@ class FG_eval {
     fg[0] = 0;
 
     // Reference State Cost
-    // TODO: Define the cost related the reference state and
-    // any anything you think may be beneficial.
+    // TODO: Define the cost related to the reference state and
+    // anything you think may be beneficial.
 
     //
     // Setup Constraints
