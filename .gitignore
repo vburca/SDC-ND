@@ -38,6 +38,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Ipopt library
+quizzes/model_predictive_control/Ipopt-3.12.7/
+
 # Distribution / packaging
 .Python
 env/
