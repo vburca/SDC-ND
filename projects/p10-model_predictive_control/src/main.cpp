@@ -12,6 +12,17 @@
 // for convenience
 using json = nlohmann::json;
 
+// Define constants
+const double Lf = 2.67;
+// Initialize steering and acceleration actuators with 0 since
+// we do not have any previous actuator inputs yet
+double delta = 0.0;
+double a = 0.0;
+// Latency in s (100 ms)
+const double latency_dt = .1; // s
+
+
+
 // For converting back and forth between radians and degrees.
 constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
@@ -98,8 +109,56 @@ int main() {
           * Both are in between [-1, 1].
           *
           */
-          double steer_value;
-          double throttle_value;
+
+          // Normalize psi angle to be between -PI and PI, otherwise our approximations
+          // are way off
+          psi = atan2(sin(psi), cos(psi)); // arctan(tan)
+
+          // Transform global map space waypoints to car space
+          Eigen::VectorXd ptsx_car(ptsx.size());
+          Eigen::VectorXd ptsy_car(ptsy.size());
+
+          for (size_t i = 0; i < ptsx.size(); i++)
+          {
+            double xdiff = ptsx[i] - px;
+            double ydiff = ptsy[i] - py;
+
+            ptsx_car[i] = xdiff * cos(-psi) - ydiff * sin(-psi);
+            ptsy_car[i] = xdiff * sin(-psi) + ydiff * cos(-psi);
+          }
+
+          // Fit a third degree polynomial
+          Eigen::VectorXd coeffs = polyfit(ptsx_car, ptsy_car, 3);
+
+          // Car's coordinate system px=py=psi=0
+          px = py = psi = 0.0;
+
+          // Calculate the CTE
+          double cte = polyeval(coeffs, 0.0) - 0.0; // for car's coordinate system, px=py=0
+          // Calculate estimated psi, orientation error
+          double epsi = -atan(coeffs[1]);
+
+          // Add latency of 100ms
+          px = v * cos(psi) * latency_dt;
+          py = v * sin(psi) * latency_dt;
+          psi = v * delta / Lf * latency_dt;
+          v = v + a * latency_dt;
+          cte = cte + v * sin(epsi) * latency_dt;
+          epsi = epsi + v * delta / Lf * latency_dt;
+
+          // Add everything to the state
+          Eigen::VectorXd state(6);
+          state << px, py, psi, v, cte, epsi;
+
+          // Solve MPC
+          vector<double> results = mpc.Solve(state, coeffs);
+
+          // Update actuators for next run
+          delta = results[0];
+          a = results[1];
+
+          double steer_value = -results[0] / deg2rad(25);
+          double throttle_value = results[1];
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -107,9 +166,9 @@ int main() {
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
 
-          //Display the MPC predicted trajectory 
-          vector<double> mpc_x_vals;
-          vector<double> mpc_y_vals;
+          //Display the MPC predicted trajectory
+          vector<double> mpc_x_vals = mpc.mpc_x;
+          vector<double> mpc_y_vals = mpc.mpc_y;
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
@@ -124,9 +183,14 @@ int main() {
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
 
+         for (size_t i = 0; i < ptsx.size(); i++)
+         {
+           next_x_vals.push_back(ptsx_car[i]);
+           next_y_vals.push_back(ptsy_car[i]);
+         }
+
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
-
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           std::cout << msg << std::endl;
