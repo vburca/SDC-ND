@@ -15,6 +15,9 @@ bottlenecks/
 # Visual Studio Code settings cache
 .vscode/
 
+# C++ executables
+*.app
+
 # Simulators
 term2_sim_windows/
 
