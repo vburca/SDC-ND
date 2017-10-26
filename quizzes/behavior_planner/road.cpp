@@ -1,7 +1,6 @@
 #include <iostream>
 #include "road.h"
 #include "vehicle.h"
-#include <iostream>
 #include <math.h>
 #include <map>
 #include <string>

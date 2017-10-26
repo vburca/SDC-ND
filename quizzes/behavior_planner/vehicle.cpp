@@ -1,10 +1,10 @@
 #include <iostream>
 #include "vehicle.h"
-#include <iostream>
 #include <math.h>
 #include <map>
 #include <string>
 #include <iterator>
+#include <algorithm>
 
 /**
  * Initializes Vehicle
@@ -57,9 +57,97 @@ void Vehicle::update_state(map<int,vector < vector<int> > > predictions) {
     }
 
     */
-    state = "KL"; // this is an example of how you change state.
 
+    // Define possible states
+    vector<string> states;
 
+    if (this->state == "KL")
+    {
+        states = { "KL", "PLCL", "PLCR" };
+    }
+    else if (this->state == "PLCL")
+    {
+        states = { "KL", "PLCL", "LCL" };
+    }
+    else if (this->state == "PLCR")
+    {
+        states = { "KL", "PLCR", "LCR" };
+    }
+    else if (this->state == "LCL")
+    {
+        states = { "KL", "LCL" };
+    }
+    else if (this->state == "LCR")
+    {
+        states = { "KL", "LCR" };
+    }
+
+    // Erase impossible states
+    if (this->lane == 0)
+    {
+        states.erase(std::remove(states.begin(), states.end(), "LCR"), states.end());
+        states.erase(std::remove(states.begin(), states.end(), "PLCR"), states.end());
+    }
+    else if (this->lane == this->lanes_available - 1)
+    {
+        states.erase(std::remove(states.begin(), states.end(), "LCL"), states.end());
+        states.erase(std::remove(states.begin(), states.end(), "PLCL"), states.end());
+    }
+
+    vector<double> costs;
+    for (string state : states)
+    {
+        vector<Vehicle::Snapshot> trajectory = trajectory_for_state(state, predictions, 5);
+        costs.push_back(calculate_cost(trajectory, predictions));
+    }
+
+    double min_cost = costs[0];
+    string best_state = states[0];
+    for (int i = 0; i < states.size(); i++)
+    {
+        if (costs[i] < min_cost)
+        {
+            min_cost = costs[i];
+            best_state = states[i];
+        }
+    }
+
+    this->state = best_state;
+}
+
+vector<Vehicle::Snapshot> Vehicle::trajectory_for_state(
+                string state,
+                map<int, vector<vector<int>>> predictions,
+                int horizon)
+{
+    Snapshot snap = this->save_snapshot();
+    this->state = state;
+
+    vector<Vehicle::Snapshot> trajectory;
+    trajectory.push_back(snap);
+
+    for (int i = 0; i < horizon; i++)
+    {
+        this->restore_from_snapshot(snap);
+        this->state = state;
+
+        this->realize_state(predictions);
+        this->increment(1);
+
+        Snapshot new_snap = this->save_snapshot();
+        trajectory.push_back(new_snap);
+
+        map<int, vector<vector<int>>>::iterator it = predictions.begin();
+        while (it != predictions.end())
+        {
+            it->second.erase(it->second.begin());
+            it++;
+        }
+    }
+
+    this->restore_from_snapshot(snap);
+
+    return trajectory;
 }
 
 void Vehicle::configure(vector<int> road_data) {
@@ -313,4 +401,288 @@ vector<vector<int> > Vehicle::generate_predictions(int horizon = 10) {
       }
     return predictions;
 
+}
+
+/**
+ * Definitions of cost functions
+ */
+double Vehicle::change_lane_cost(
+                vector<Vehicle::Snapshot> trajectory,
+                map<int, vector<vector<int>>> predictions,
+                Vehicle::TrajectoryData data)
+{
+    // Penalizes lane changes AWAY from the goal lane and rewards
+    // lane changes TOWARDS the goal lane.
+    int proposed_lanes = data.end_lanes_from_goal;
+    int cur_lanes = trajectory[0].lane;
+
+    double cost = 0.0;
+    if (proposed_lanes > cur_lanes)
+    {
+        cost = COMFORT;
+    }
+    else if (proposed_lanes < cur_lanes)
+    {
+        cost = -COMFORT;
+    }
+
+    return cost;
+}
+
+double Vehicle::distance_from_goal_lane(
+                vector<Vehicle::Snapshot> trajectory,
+                map<int, vector<vector<int>>> predictions,
+                Vehicle::TrajectoryData data)
+{
+    // Penalizes distance from goal lane as a function of time left to target
+    double distance = double(abs(data.end_distance_to_goal));
+    distance = max(distance, 1.0);
+
+    double time_to_goal = distance / data.avg_speed;
+    double lanes = double(data.end_lanes_from_goal);
+    double multiplier = 5 * lanes / time_to_goal;
+    double cost = multiplier * REACH_GOAL;
+
+    return cost;
+}
+
+double Vehicle::inefficiency_cost(
+                vector<Vehicle::Snapshot> trajectory,
+                map<int, vector<vector<int>>> predictions,
+                Vehicle::TrajectoryData data)
+{
+    // Penalizes non-optimal (non-target) speed
+    double speed = data.avg_speed;
+    double target_speed = double(this->target_speed);
+    double diff = target_speed - speed;
+    double percentage = diff / target_speed;
+    double multiplier = pow(percentage, 2.0);
+    double cost = multiplier * EFFICIENCY;
+
+    return cost;
+}
+
+double Vehicle::collision_cost(
+                vector<Vehicle::Snapshot> trajectory,
+                map<int, vector<vector<int>>> predictions,
+                Vehicle::TrajectoryData data)
+{
+    // Penalizes collisions with other vehicles
+    double cost = 0.0;
+
+    if (data.collides.collision)
+    {
+        int time_to_collision = data.collides.time;
+        double exponent = pow(double(time_to_collision), 2.0);
+        double multiplier = exp(-exponent);
+
+        cost = multiplier * COLLISION;
+    }
+
+    return cost;
+}
+
+double Vehicle::buffer_cost(
+                vector<Vehicle::Snapshot> trajectory,
+                map<int, vector<vector<int>>> predictions,
+                Vehicle::TrajectoryData data)
+{
+    // Penalize small buffer time distance to other vehicles
+    double cost = 0.0;
+    double closest = data.closest_approach;
+
+    if (closest = 0.0)
+    {
+        cost = 10 * DANGER;
+    }
+    else
+    {
+        double timesteps_away = closest / data.avg_speed;
+        if (timesteps_away < DESIRED_BUFFER)
+        {
+            double multiplier = 1.0 - pow(timesteps_away / DESIRED_BUFFER, 2);
+            cost = multiplier * DANGER;
+        }
+    }
+
+    return cost;
+}
+
+double rms_acc_cost(
+                vector<Vehicle::Snapshot> trajectory,
+                map<int, vector<vector<int>>> predictions,
+                Vehicle::TrajectoryData data)
+{
+    // Penalize accelerations that are too large.
+    double cost = data.rms_acc * COMFORT;
+
+    return cost;
+}
+
+double Vehicle::calculate_cost(
+                vector<Vehicle::Snapshot> trajectory,
+                map<int, vector<vector<int>>> predictions)
+{
+    Vehicle::TrajectoryData data = get_helper_data(trajectory, predictions);
+
+    double cost = 0.0;
+    cost += change_lane_cost(trajectory, predictions, data);
+    cost += distance_from_goal_lane(trajectory, predictions, data);
+    cost += inefficiency_cost(trajectory, predictions, data);
+    cost += collision_cost(trajectory, predictions, data);
+    cost += buffer_cost(trajectory, predictions, data);
+
+    return cost;
+}
+
+Vehicle::TrajectoryData Vehicle::get_helper_data(
+                vector<Vehicle::Snapshot> trajectory,
+                map<int, vector<vector<int>>> predictions)
+{
+    Vehicle::Snapshot cur_snapshot = trajectory[0];
+    Vehicle::Snapshot first = trajectory[1];
+    Vehicle::Snapshot last = trajectory.back();
+
+    int end_distance_to_goal = this->goal_s - last.s;
+    int end_lanes_from_goal = abs(this->goal_lane - last.lane);
+
+    double dt = double(trajectory.size());
+
+    int proposed_lane = first.lane;
+    double avg_speed = (last.s - cur_snapshot.s) / dt;
+
+    Vehicle::collider collides;
+    collides.collision = false;
+
+    // Interested only in the predictions for the vehicles in the ego's lane
+    map<int, vector<vector<int>>> filtered = filter_predictions_by_lane(predictions, proposed_lane);
+
+    vector<int> accels;
+    int closest_approach = 999999;
+    Vehicle::Snapshot last_snap = trajectory[0];
+    for (int i = 1; i <= PLANNING_HORIZON; i++)
+    {
+        Vehicle::Snapshot snap = trajectory[i];
+        accels.push_back(snap.a);
+
+        // Iterate over all the vehicles in the ego's lane
+        map<int, vector<vector<int>>>::iterator it = filtered.begin();
+        while (it != filtered.end())
+        {
+            int vehicle_id = it->first;
+            vector<vector<int>> predicted_trajectory = it->second;
+
+            vector<int> vehicle_state = predicted_trajectory[i];
+            vector<int> last_vehicle_state = predicted_trajectory[i - 1];
+
+            bool vehicle_collides = check_collision(snap, last_vehicle_state[1], vehicle_state[1]);
+
+            if (vehicle_collides)
+            {
+                collides.collision = true;
+                collides.time = i;
+            }
+
+            int dist = abs(vehicle_state[1] - snap.s);
+
+            if (dist < closest_approach)
+            {
+                closest_approach = dist;
+            }
+
+            it++;
+        }
+
+        last_snap = snap;
+    }
+
+    int max_acc = 0;
+    double rms_acc = 0.0;
+    for (int acc : accels)
+    {
+        rms_acc += pow(acc, 2);
+
+        if (abs(acc) >= max_acc)
+        {
+            max_acc = abs(acc);
+        }
+    }
+
+    rms_acc = rms_acc / accels.size();
+
+    Vehicle::TrajectoryData data;
+
+    data.proposed_lane = proposed_lane;
+    data.avg_speed = avg_speed;
+    data.max_acc = max_acc;
+    data.rms_acc = rms_acc;
+    data.closest_approach = closest_approach;
+    data.end_distance_to_goal = end_distance_to_goal;
+    data.end_lanes_from_goal = end_lanes_from_goal;
+    data.collides = collides;
+
+    return data;
+}
+
+bool Vehicle::check_collision(Vehicle::Snapshot snapshot, int s_prev, int s_now)
+{
+    int s = snapshot.s;
+    int v = snapshot.v;
+    int v_target = s_now - s_prev;
+
+    if (s_prev < s)
+    {
+        if (s_now >= s)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    if (s_prev > s)
+    {
+        if (s_now <= s)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    if (s_prev == s)
+    {
+        if (v_target > v)
+        {
+            return false;
+        }
+
+        return true;
+    }
+}
+
+map<int, vector<vector<int>>> Vehicle::filter_predictions_by_lane(
+                map<int, vector<vector<int>>> predictions,
+                int lane)
+{
+    map<int, vector<vector<int>>> filtered_predictions;
+    map<int, vector<vector<int>>>::iterator it = predictions.begin();
+
+    // For each of the other vehicles, select the ones that are on the same lane as
+    // the one the ego vehicle is on (i.e. the lane that is passed in).
+    // Filter out the vehicles that have id -1 (i.e. are the ego vehicle)
+    while (it != predictions.end())
+    {
+        int vehicle_id = it->first;
+        vector<vector<int>> predicted_trajectory = it->second;
+
+        if (predicted_trajectory[0][0] == lane && vehicle_id != -1)
+        {
+            filtered_predictions[vehicle_id] = predicted_trajectory;
+        }
+
+        it++;
+    }
+
+    return filtered_predictions;
 }
