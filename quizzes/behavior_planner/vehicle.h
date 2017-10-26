@@ -163,10 +163,6 @@ public:
                 map<int, vector<vector<int>>> predictions,
                 Vehicle::TrajectoryData data);
 
-    double rms_acc_cost(vector<Vehicle::Snapshot> trajectory,
-                map<int, vector<vector<int>>> predictions,
-                Vehicle::TrajectoryData data);
-
    double calculate_cost(vector<Vehicle::Snapshot> trajectory,
                 map<int, vector<vector<int>>> predictions);
 

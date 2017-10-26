@@ -508,17 +508,6 @@ double Vehicle::buffer_cost(
     return cost;
 }
 
-double rms_acc_cost(
-                vector<Vehicle::Snapshot> trajectory,
-                map<int, vector<vector<int>>> predictions,
-                Vehicle::TrajectoryData data)
-{
-    // Penalize accelerations that are too large.
-    double cost = data.rms_acc * COMFORT;
-
-    return cost;
-}
-
 double Vehicle::calculate_cost(
                 vector<Vehicle::Snapshot> trajectory,
                 map<int, vector<vector<int>>> predictions)
